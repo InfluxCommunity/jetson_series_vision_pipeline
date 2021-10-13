@@ -54,8 +54,20 @@ def osd_sink_pad_buffer_probe(pad,info,u_data):
                 l_obj=l_obj.next
             except StopIteration:
                 break
+        # Do somthing with Inference data -> Overlay 
+        overlay(batch_meta, frame_meta, frame_number, num_rects, obj_counter)
 
-        # Acquiring a display meta object. The memory ownership remains in
+        try:
+            l_frame=l_frame.next
+        except StopIteration:
+            break
+			
+    return Gst.PadProbeReturn.OK	
+
+
+
+def overlay(batch_meta, frame_meta, frame_number, num_rects, obj_counter):
+           # Acquiring a display meta object. The memory ownership remains in
         # the C code so downstream plugins can still access it. Otherwise
         # the garbage collector will claim it when this probe function exits.
         display_meta=pyds.nvds_acquire_display_meta_from_pool(batch_meta)
@@ -85,9 +97,3 @@ def osd_sink_pad_buffer_probe(pad,info,u_data):
         # Using pyds.get_string() to get display_text as string
         print(pyds.get_string(py_nvosd_text_params.display_text))
         pyds.nvds_add_display_meta_to_frame(frame_meta, display_meta)
-        try:
-            l_frame=l_frame.next
-        except StopIteration:
-            break
-			
-    return Gst.PadProbeReturn.OK	

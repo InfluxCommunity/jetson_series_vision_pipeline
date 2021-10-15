@@ -1,5 +1,7 @@
 import pyds
 from gi.repository import  Gst
+from mqtt_client import mqtt_client
+from data_structures.inference import inference
 
 PGIE_CLASS_ID_VEHICLE = 0
 PGIE_CLASS_ID_BICYCLE = 1
@@ -8,16 +10,30 @@ PGIE_CLASS_ID_ROADSIGN = 3
 
 
 
+BROKER_CONNECT = True
+INFERENCE = inference()
+
+
+
 def osd_sink_pad_buffer_probe(pad,info,u_data):
+    global BROKER_CONNECT
+    global INFERENCE
+
     frame_number=0
-    #Intiallizing object counter with 0.
+    num_rects=0
     obj_counter = {
         PGIE_CLASS_ID_VEHICLE:0,
         PGIE_CLASS_ID_PERSON:0,
         PGIE_CLASS_ID_BICYCLE:0,
         PGIE_CLASS_ID_ROADSIGN:0
     }
-    num_rects=0
+
+    try:
+        mqttClient = mqtt_client("localhost", 1883 , "Inference_results")
+        mqttClient.connect_client()
+    except:
+        print("could not connect to MQTT Broker")
+        BROKER_CONNECT = False
 
     gst_buffer = info.get_buffer()
     if not gst_buffer:
@@ -43,21 +59,37 @@ def osd_sink_pad_buffer_probe(pad,info,u_data):
         frame_number=frame_meta.frame_num
         num_rects = frame_meta.num_obj_meta
         l_obj=frame_meta.obj_meta_list
+
         while l_obj is not None:
             try:
                 # Casting l_obj.data to pyds.NvDsObjectMeta
                 obj_meta=pyds.NvDsObjectMeta.cast(l_obj.data)
             except StopIteration:
                 break
+            
+       
             obj_counter[obj_meta.class_id] += 1
+            INFERENCE.add_detection({obj_meta.object_id: {"classID": obj_meta.class_id,  
+                                                          "confidence": obj_meta.confidence,
+                                                          "coor_left": obj_meta.rect_params.left,
+                                                          "coor_top": obj_meta.rect_params.top,
+                                                          "box_width": obj_meta.rect_params.width,
+                                                          "box_height": obj_meta.rect_params.height
+                                                          }})
             try: 
                 l_obj=l_obj.next
             except StopIteration:
                 break
         # Do somthing with Inference data -> Overlay 
+        #                                 -> MQTT
+
         overlay(batch_meta, frame_meta, frame_number, num_rects, obj_counter)
 
+        if BROKER_CONNECT == True:
+            publish_to_mqtt(mqttClient, frame_number, num_rects)
+
         try:
+            INFERENCE.reset()
             l_frame=l_frame.next
         except StopIteration:
             break
@@ -66,7 +98,28 @@ def osd_sink_pad_buffer_probe(pad,info,u_data):
 
 
 
-def overlay(batch_meta, frame_meta, frame_number, num_rects, obj_counter):
+
+def publish_to_mqtt(mqttClient, frame_number, num_rects) -> None:
+
+    current_num_rects = 0
+
+    if num_rects != current_num_rects:
+        INFERENCE.set_total_obj(num_rects)
+        INFERENCE.set_detection_frame(frame_number)
+        data = INFERENCE.return_data_sample()
+        topic = "inference"
+
+
+        mqttClient.publish_to_topic(topic, data)
+        print(data, flush=True)
+        current_num_rects = num_rects
+
+
+
+
+
+
+def overlay(batch_meta, frame_meta, frame_number, num_rects, obj_counter) -> None:
            # Acquiring a display meta object. The memory ownership remains in
         # the C code so downstream plugins can still access it. Otherwise
         # the garbage collector will claim it when this probe function exits.
@@ -95,5 +148,5 @@ def overlay(batch_meta, frame_meta, frame_number, num_rects, obj_counter):
         # set(red, green, blue, alpha); set to Black
         py_nvosd_text_params.text_bg_clr.set(0.0, 0.0, 0.0, 1.0)
         # Using pyds.get_string() to get display_text as string
-        print(pyds.get_string(py_nvosd_text_params.display_text))
+        
         pyds.nvds_add_display_meta_to_frame(frame_meta, display_meta)

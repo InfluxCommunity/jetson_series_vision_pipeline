@@ -74,6 +74,10 @@ process-mode=1
 model-color-format=0
 gie-unique-id=1
 output-blob-names=conv2d_bbox;conv2d_cov/Sigmoid
+cluster-mode=2
+network-type=0
+
+
 #scaling-filter=0
 #scaling-compute-hw=0
 

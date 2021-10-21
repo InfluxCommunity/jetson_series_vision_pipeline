@@ -60,6 +60,8 @@ def osd_sink_pad_buffer_probe(pad,info,u_data):
         num_rects = frame_meta.num_obj_meta
         l_obj=frame_meta.obj_meta_list
 
+        unique_obj_id = 0
+
         while l_obj is not None:
             try:
                 # Casting l_obj.data to pyds.NvDsObjectMeta
@@ -67,15 +69,21 @@ def osd_sink_pad_buffer_probe(pad,info,u_data):
             except StopIteration:
                 break
             
-       
+            
             obj_counter[obj_meta.class_id] += 1
-            INFERENCE.add_detection({obj_meta.object_id: {"classID": obj_meta.class_id,  
-                                                          "confidence": obj_meta.confidence,
-                                                          "coor_left": obj_meta.rect_params.left,
-                                                          "coor_top": obj_meta.rect_params.top,
-                                                          "box_width": obj_meta.rect_params.width,
-                                                          "box_height": obj_meta.rect_params.height
-                                                          }})
+            unique_obj_id +=1
+
+            INFERENCE.add_detection({"classID": obj_meta.class_id,
+                                     "label": obj_meta.obj_label,  
+                                     "confidence": obj_meta.confidence,
+                                     "coor_left": obj_meta.rect_params.left,
+                                     "coor_top": obj_meta.rect_params.top,
+                                     "box_width": obj_meta.rect_params.width,
+                                     "box_height": obj_meta.rect_params.height,
+                                     "objectID": obj_meta.object_id,
+                                     "unique_com_id": "OBJ"+str(unique_obj_id)
+                                                          })
+            
             try: 
                 l_obj=l_obj.next
             except StopIteration:
@@ -85,7 +93,7 @@ def osd_sink_pad_buffer_probe(pad,info,u_data):
 
         overlay(batch_meta, frame_meta, frame_number, num_rects, obj_counter)
 
-        if BROKER_CONNECT == True:
+        if BROKER_CONNECT == True and not (frame_number%30):
             publish_to_mqtt(mqttClient, frame_number, num_rects)
 
         try:

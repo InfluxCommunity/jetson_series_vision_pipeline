@@ -3,7 +3,7 @@ import sys
 import gi
 gi.require_version('Gst', '1.0')
 gi.require_version('GstRtspServer', '1.0')
-from gi.repository import GObject, Gst, GstRtspServer
+from gi.repository import  Gst
 
 class deepstream_pipeline:
     def __init__(self) -> None:
@@ -50,7 +50,7 @@ class deepstream_pipeline:
         self.caps = Gst.ElementFactory.make("capsfilter", "filter")
         self.caps.set_property("caps", Gst.Caps.from_string("video/x-raw(memory:NVMM), format=I420"))
 
-                # Source element for reading from the file
+
         print("Creating Source \n ")
         self.source = Gst.ElementFactory.make("v4l2src", "usb-cam-source")
         if not self.source:
@@ -73,7 +73,7 @@ class deepstream_pipeline:
         # In case we have a camera with raw format supported in
         # nvvideoconvert, GStreamer plugins' capability negotiation
         # shall be intelligent enough to reduce compute by
-        # videoconvert doing passthrough (TODO we need to confirm this)
+        # videoconvert doing passthrough.
 
         # Make the encoder
         if codec == "H264":

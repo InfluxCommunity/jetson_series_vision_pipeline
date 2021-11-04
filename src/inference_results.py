@@ -111,16 +111,16 @@ def publish_to_mqtt(mqttClient, frame_number, num_rects) -> None:
 
     current_num_rects = 0
 
-    if num_rects != current_num_rects:
-        INFERENCE.set_total_obj(num_rects)
-        INFERENCE.set_detection_frame(frame_number)
-        data = INFERENCE.return_data_sample()
-        topic = "inference"
+    #if num_rects != current_num_rects:
+    INFERENCE.set_total_obj(num_rects)
+    INFERENCE.set_detection_frame(frame_number)
+    data = INFERENCE.return_data_sample()
+    topic = "inference"
 
 
-        mqttClient.publish_to_topic(topic, data)
-        print(data, flush=True)
-        current_num_rects = num_rects
+    mqttClient.publish_to_topic(topic, data)
+    print(data, flush=True)
+    current_num_rects = num_rects
 
 
 

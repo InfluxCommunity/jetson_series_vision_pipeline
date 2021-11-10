@@ -3,6 +3,7 @@
 This tutorial will show you how to setup and configure your own Vision AI solution using [DeepStream](https://developer.nvidia.com/deepstream-sdk), [Telegraf](https://github.com/influxdata/telegraf) and [InfluxDB](https://github.com/influxdata/influxdb). 
 
 **The goal:**
+
 ![enter image description here](docs/images/Vision_Pipeline_Overview.png)
 
 

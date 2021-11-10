@@ -1,0 +1,458 @@
+apiVersion: influxdata.com/v2alpha1
+kind: Label
+metadata:
+    name: zen-liskov-e46001
+spec:
+    color: '#0b3a8d'
+    name: inference_results
+---
+apiVersion: influxdata.com/v2alpha1
+kind: Bucket
+metadata:
+    name: dangerous-yalow-246003
+spec:
+    associations:
+      - kind: Label
+        name: zen-liskov-e46001
+    name: edge_inference
+    retentionRules:
+      - everySeconds: 604800
+        type: expire
+---
+apiVersion: influxdata.com/v2alpha1
+kind: Task
+metadata:
+    name: gallant-newton-246007
+spec:
+    associations:
+      - kind: Label
+        name: zen-liskov-e46001
+    every: 1h
+    name: edge_to_cloud
+    query: |-
+        import "experimental"
+        import "influxdata/influxdb/secrets"
+
+
+
+        from(bucket: "edge_inference")
+            |> range(start: -1h)
+            |> filter(fn: (r) => r["_measurement"] == "BW_Inference_results")
+            |> aggregateWindow(every: 10m, fn: last, createEmpty: false)
+            |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
+            |> drop(columns: ["_start", "_stop"])
+            |> group(columns: ["_measurement", "obj"], mode: "by")
+            |> experimental.to(
+                bucketID: "13dd5e3bc3998a75",
+                orgID: "05ea551cd21fb6e4",
+                host: "https://us-east-1-1.aws.cloud2.influxdata.com",
+                token: secrets.get(key: "cloud"),
+            )
+---
+apiVersion: influxdata.com/v2alpha1
+kind: Variable
+metadata:
+    name: eerie-satoshi-646003
+spec:
+    associations:
+      - kind: Label
+        name: zen-liskov-e46001
+    language: flux
+    name: bucket
+    query: |-
+        buckets()
+          |> filter(fn: (r) => r.name !~ /^_/)
+          |> rename(columns: {name: "_value"})
+          |> keep(columns: ["_value"])
+    type: query
+---
+apiVersion: influxdata.com/v2alpha1
+kind: Dashboard
+metadata:
+    name: hopeful-maxwell-646001
+spec:
+    associations:
+      - kind: Label
+        name: zen-liskov-e46001
+    charts:
+      - colors:
+          - hex: '#9394FF'
+            id: base
+            name: comet
+            type: background
+        decimalPlaces: 0
+        height: 1
+        kind: Single_Stat
+        name: Frame Number
+        queries:
+          - query: |-
+                from(bucket: v.bucket)
+                  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
+                  |> filter(fn: (r) => r["_measurement"] == "BW_Inference_results")
+                  |> filter(fn: (r) => r["_field"] == "detection_frame_number")
+                  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)
+                  |> yield(name: "last")
+        staticLegend: {}
+        width: 2
+      - colors:
+          - hex: '#BF3D5E'
+            id: "0"
+            name: ruby
+            type: min
+          - hex: '#FFB94A'
+            id: 56891a4a-536b-4c39-9262-66f79d2f533c
+            name: pineapple
+            type: threshold
+            value: 30
+          - hex: '#32B08C'
+            id: d976fe6c-4008-4930-bc58-3935a1686b36
+            name: viridian
+            type: threshold
+            value: 60
+          - hex: '#32B08C'
+            id: "1"
+            name: viridian
+            type: max
+            value: 100
+        decimalPlaces: 2
+        height: 3
+        kind: Gauge
+        name: Current Average Confidence
+        queries:
+          - query: |-
+                from(bucket: v.bucket)
+                  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
+                  |> filter(fn: (r) => r["_measurement"] == "BW_Inference_results")
+                  |> filter(fn: (r) => r["_field"] == "confidence")
+                  |> drop(columns: ["obj"])
+                  |> mean(column: "_value")
+                  |> map(fn: (r) => ({ r with _value: r._value * 100.0}))
+                  |> yield(name: "mean")
+        staticLegend: {}
+        suffix: '%'
+        tickSuffix: '%'
+        width: 4
+        yPos: 1
+      - axes:
+          - base: "10"
+            name: x
+            scale: linear
+          - base: "10"
+            label: Height (px)
+            name: "y"
+            scale: linear
+            suffix: px
+        colorizeRows: true
+        colors:
+          - hex: '#F6F6F8'
+            id: b2f45c2c-adae-46cd-87dc-17a8a059a520
+            name: T-Max 400 Film
+            type: scale
+          - hex: '#A4A8B6'
+            id: 0d94d77e-dc8f-45dd-814e-51e8807c448d
+            name: T-Max 400 Film
+            type: scale
+          - hex: '#545667'
+            id: 0d20a11b-a7e2-422f-9498-8733074f27c8
+            name: T-Max 400 Film
+            type: scale
+          - hex: '#FFD255'
+            id: base
+            name: thunder
+            type: text
+        decimalPlaces: 2
+        height: 2
+        hoverDimension: auto
+        kind: Single_Stat_Plus_Line
+        legendColorizeRows: true
+        legendOpacity: 1
+        legendOrientationThreshold: 1e+08
+        name: Average Bounding Box Height
+        opacity: 1
+        orientationThreshold: 1e+08
+        position: overlaid
+        queries:
+          - query: |-
+                from(bucket: v.bucket)
+                  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
+                  |> filter(fn: (r) => r["_measurement"] == "BW_Inference_results")
+                  |> filter(fn: (r) => r["_field"] == "box_height")
+                  |> drop(columns: ["obj"])
+                  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)
+                  |> yield(name: "mean")
+        shade: true
+        staticLegend:
+            colorizeRows: true
+            opacity: 1
+            orientationThreshold: 1e+08
+            widthRatio: 1
+        suffix: px
+        width: 4
+        widthRatio: 1
+        xCol: _time
+        yCol: _value
+        yPos: 4
+      - axes:
+          - base: "10"
+            name: x
+            scale: linear
+          - base: "10"
+            label: Height (px)
+            name: "y"
+            scale: linear
+            suffix: px
+        colorizeRows: true
+        colors:
+          - hex: '#F6F6F8'
+            id: b2f45c2c-adae-46cd-87dc-17a8a059a520
+            name: T-Max 400 Film
+            type: scale
+          - hex: '#A4A8B6'
+            id: 0d94d77e-dc8f-45dd-814e-51e8807c448d
+            name: T-Max 400 Film
+            type: scale
+          - hex: '#545667'
+            id: 0d20a11b-a7e2-422f-9498-8733074f27c8
+            name: T-Max 400 Film
+            type: scale
+          - hex: '#F95F53'
+            id: base
+            name: curacao
+            type: text
+        decimalPlaces: 2
+        height: 2
+        hoverDimension: auto
+        kind: Single_Stat_Plus_Line
+        legendColorizeRows: true
+        legendOpacity: 1
+        legendOrientationThreshold: 1e+08
+        name: Average Bounding Box Width
+        opacity: 1
+        orientationThreshold: 1e+08
+        position: overlaid
+        queries:
+          - query: |-
+                from(bucket: v.bucket)
+                  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
+                  |> filter(fn: (r) => r["_measurement"] == "BW_Inference_results")
+                  |> filter(fn: (r) => r["_field"] == "box_width")
+                  |> drop(columns: ["obj"])
+                  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)
+                  |> yield(name: "mean")
+        shade: true
+        staticLegend:
+            colorizeRows: true
+            opacity: 1
+            orientationThreshold: 1e+08
+            widthRatio: 1
+        suffix: px
+        width: 4
+        widthRatio: 1
+        xCol: _time
+        yCol: _value
+        yPos: 6
+      - colors:
+          - hex: '#ffffff'
+            id: base
+            name: white
+            type: text
+        fieldOptions:
+          - displayName: _start
+            fieldName: _start
+          - displayName: _stop
+            fieldName: _stop
+          - displayName: _time
+            fieldName: _time
+            visible: true
+          - displayName: _value
+            fieldName: _value
+            visible: true
+          - displayName: _field
+            fieldName: _field
+          - displayName: _measurement
+            fieldName: _measurement
+          - displayName: host
+            fieldName: host
+          - displayName: obj
+            fieldName: obj
+            visible: true
+          - displayName: topic
+            fieldName: topic
+          - displayName: label
+            fieldName: label
+            visible: true
+          - displayName: OBJ1
+            fieldName: OBJ1
+            visible: true
+          - displayName: OBJ2
+            fieldName: OBJ2
+            visible: true
+          - displayName: OBJ3
+            fieldName: OBJ3
+            visible: true
+          - displayName: OBJ4
+            fieldName: OBJ4
+            visible: true
+          - displayName: OBJ5
+            fieldName: OBJ5
+            visible: true
+          - displayName: OBJ6
+            fieldName: OBJ6
+            visible: true
+          - displayName: OBJ7
+            fieldName: OBJ7
+            visible: true
+          - displayName: OBJ8
+            fieldName: OBJ8
+            visible: true
+          - displayName: OBJ10
+            fieldName: OBJ10
+            visible: true
+          - displayName: OBJ11
+            fieldName: OBJ11
+            visible: true
+          - displayName: OBJ12
+            fieldName: OBJ12
+            visible: true
+          - displayName: OBJ9
+            fieldName: OBJ9
+            visible: true
+        height: 4
+        kind: Table
+        name: Detection Timeline
+        queries:
+          - query: |-
+                from(bucket: v.bucket)
+                  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
+                  |> filter(fn: (r) => r["_measurement"] == "BW_Inference_results")
+                  |> filter(fn: (r) => r["_field"] == "label")
+                  |> pivot(rowKey:["_time"], columnKey: ["obj"], valueColumn: "_value")
+                  |> yield(name: "last")
+        staticLegend: {}
+        tableOptions:
+            sortBy: _time
+            verticalTimeAxis: true
+        timeFormat: HH:mm:ss ZZ
+        width: 12
+        yPos: 8
+      - colors:
+          - hex: '#32B08C'
+            id: base
+            name: viridian
+            type: background
+          - hex: '#F48D38'
+            id: aa37fa1c-5566-4f45-85c5-5d34696a5f90
+            name: tiger
+            type: background
+            value: 4
+          - hex: '#BF3D5E'
+            id: b934531b-67ac-48eb-877f-4ecde29985ac
+            name: ruby
+            type: background
+            value: 8
+        decimalPlaces: 0
+        height: 1
+        kind: Single_Stat
+        name: Current Detections In Frame
+        queries:
+          - query: |-
+                from(bucket: v.bucket)
+                  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
+                  |> filter(fn: (r) => r["_measurement"] == "BW_Inference_results")
+                  |> filter(fn: (r) => r["_field"] == "total_num_obj")
+                  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)
+                  |> yield(name: "last")
+        staticLegend: {}
+        width: 2
+        xPos: 2
+      - axes:
+          - name: x
+          - label: Inference Labels
+            name: "y"
+        colors:
+          - hex: '#31C0F6'
+          - hex: '#BC00B8'
+          - hex: '#FF7E27'
+        height: 4
+        kind: Mosaic
+        legendColorizeRows: true
+        legendOpacity: 1
+        legendOrientationThreshold: 1e+08
+        name: Detections
+        queries:
+          - query: |-
+                from(bucket: v.bucket)
+                  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
+                  |> filter(fn: (r) => r["_measurement"] == "BW_Inference_results")
+                  |> filter(fn: (r) => r["_field"] == "label")
+                  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)
+                  |> yield(name: "last")
+        staticLegend: {}
+        width: 8
+        xCol: _time
+        xPos: 4
+        yLabelColumns:
+          - _value
+        ySeriesColumns:
+          - host
+          - _value
+      - axes:
+          - base: "10"
+            name: x
+            scale: linear
+          - base: "2"
+            label: Confidence %
+            name: "y"
+            scale: linear
+            suffix: '%'
+        colorizeRows: true
+        colors:
+          - hex: '#31C0F6'
+            id: 50ff49bb-0ad1-4981-aaa8-8be301fd35f6
+            name: Nineteen Eighty Four
+            type: scale
+          - hex: '#A500A5'
+            id: 5342d084-b5da-4b19-b924-37b987f1ecb5
+            name: Nineteen Eighty Four
+            type: scale
+          - hex: '#FF7E27'
+            id: d8cda534-cd8c-4f36-8e0b-074aab3827b0
+            name: Nineteen Eighty Four
+            type: scale
+        geom: step
+        height: 4
+        heightRatio: 0.4267605633802817
+        hoverDimension: auto
+        kind: Xy
+        legendColorizeRows: true
+        legendOpacity: 1
+        legendOrientationThreshold: -1
+        name: Detection Confidence (Per Object)
+        opacity: 1
+        orientationThreshold: 1e+08
+        position: overlaid
+        queries:
+          - query: |-
+                from(bucket: v.bucket)
+                  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
+                  |> filter(fn: (r) => r["_measurement"] == "BW_Inference_results")
+                  |> filter(fn: (r) => r["_field"] == "confidence")
+                  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)
+                  |> map(fn: (r) => ({ r with _value: r._value * 100.0 }))
+                  |> yield(name: "mean")
+        shade: true
+        staticLegend:
+            colorizeRows: true
+            heightRatio: 0.4267605633802817
+            opacity: 1
+            orientationThreshold: 1e+08
+            widthRatio: 1
+        width: 8
+        widthRatio: 1
+        xCol: _time
+        xPos: 4
+        yCol: _value
+        yPos: 4
+    description: A collection of useful visualizations for monitoring  the results
+        of our Vision AI pipeline
+    name: Infernece Results

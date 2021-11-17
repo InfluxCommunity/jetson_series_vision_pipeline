@@ -9,7 +9,7 @@ Quick pivot: GStreamer in short is a framework that allows you to build multimed
 gst-launch-1.0 v4l2src ! jpegdec ! xvimagesink
 
 ```
-![enter image description here](e)
+![basic_gstreamer_pipeline](/docs/images/basic_gstreamer_pipeline.png)
 
 Figure 2 ~ GStreamer Example
 

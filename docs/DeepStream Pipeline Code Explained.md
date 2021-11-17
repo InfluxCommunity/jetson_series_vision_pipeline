@@ -7,7 +7,7 @@
 My aim was to improve the readability and overall modularity of the code as we will be extending to include our own data model for Telegraf and InfluxDB. Here is a map of project files (Please forgive the butchering of a class diagram) :
 
   
-![](cd)
+![](/docs/UML_project_diagram.png)
 
   
 

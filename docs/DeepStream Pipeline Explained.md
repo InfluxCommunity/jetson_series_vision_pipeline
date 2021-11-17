@@ -1,9 +1,5 @@
 ﻿## Vision AI Pipeline
 
-Now that you have enough background knowledge to be dangerous let’s take a look at our vision pipeline. I am going to break it down into two diagrams:
-
-  
-
 ![basic_gstreamer_pipeline](/docs/images/Vision_Pipeline_Overview.png)
 
 Figure 3 ~ Vision AI Pipeline (High level)

@@ -4,7 +4,7 @@ Now that you have enough background knowledge to be dangerous let’s take a loo
 
   
 
-![basic_gstreamer_pipeline](/docs/images/basic_gstreamer_pipeline.png)
+![basic_gstreamer_pipeline](/docs/images/Vision_Pipeline_Overview.png)
 
 Figure 3 ~ Vision AI Pipeline (High level)
 

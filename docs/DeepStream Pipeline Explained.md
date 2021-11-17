@@ -4,7 +4,7 @@ Now that you have enough background knowledge to be dangerous let’s take a loo
 
   
 
-![enter image description here](simple)
+![basic_gstreamer_pipeline](/docs/images/basic_gstreamer_pipeline.png)
 
 Figure 3 ~ Vision AI Pipeline (High level)
 
@@ -23,7 +23,7 @@ So what does our vision AI pipeline look like in Gstreamer components:
 
   
 
-![enter image description here](gstreamer)
+![gstreamer_vision_pipeline](/docs/images/gstreamer_vision_pipeline.png)
 
 Figure 4 ~ Vision AI Pipeline (GStreamer)
 
@@ -146,6 +146,6 @@ In short, we are providing a [Caffe mode](https://catalog.ngc.nvidia.com/orgs/nv
 
 Lastly, let’s talk about the model. Our model has been created and trained using the Caffe deep learning framework. Caffe in short allows to you create or modify neural network architectures by configuring its layer parameters. For more information on Caffe check out their [website](https://caffe.berkeleyvision.org/). Our neural network architecture is ResNet (residual neural network). This architecture was designed by Microsoft to solve a [performance degradation problem](https://www.youtube.com/watch?v=RQ4sMZiciuI&t=168s) in Deep neural networks. Our model has been trained on 4 key items (people, bikes, cars and signs). We have the advantage that our model is publicly acceptable and trained on thousands of images.
 
-![enter image description here](pics)
+![sample_data](/docs/images/sample_data.png)
 
 Figure 5 - Visual representation of a training set

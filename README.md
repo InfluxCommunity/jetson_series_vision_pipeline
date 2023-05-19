@@ -55,6 +55,14 @@ Please follow my blog  [here](https://www.influxdata.com/blog/nvidia-jetson-seri
 
     python3 main.py /dev/video0
 
+## Grafana Dashboard (Version 3.0 Only)
+
+1. Create a Grafana account and Install the FlightSQL Library
+2. Setup the flightsql client like so:
+![First steps, make sure to include the :443](docs/images/grafana1.png)
+![Put in your database name](docs/images/grafana2.png)
+
+3. Go ahead and upload the Vision AI Json file into your dashboard.
 
 ## Contributing
 
